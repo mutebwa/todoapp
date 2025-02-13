@@ -9,11 +9,11 @@ import (
 	"strconv"
 )
 
-//Defining the type of task
+// Defining the type of task
 type Task struct {
-	ID	int		`json:"id"`
-	Name string `json:"name"`
-	Status  bool    `json:"status"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Status      bool   `json:"status"`
 	Description string `json:"description"`
 }
 
@@ -50,6 +50,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 func writeTasksToCSV(filename string, tasks []Task) error {
 	// Create or truncate the CSV file.
 	file, err := os.Create(filename)
+	os.
 	if err != nil {
 		return err
 	}
@@ -60,18 +61,18 @@ func writeTasksToCSV(filename string, tasks []Task) error {
 	defer writer.Flush()
 
 	// Write the header row.
-	header := []string{"ID", "Name", "Status", "Description"}
-	if err := writer.Write(header); err != nil {
-		return err
-	}
+	// header := []string{"ID", "Name", "Status", "Description"}
+	// if err := writer.Write(header); err != nil {
+	// 	return err
+	// }
 
 	// Write each task as a CSV record.
 	for _, task := range tasks {
 		record := []string{
-			strconv.Itoa(task.ID),        // Convert int to string.
-			task.Name,                    // Already a string.
+			strconv.Itoa(task.ID),           // Convert int to string.
+			task.Name,                       // Already a string.
 			strconv.FormatBool(task.Status), // Convert bool to string.
-			task.Description,             // Already a string.
+			task.Description,                // Already a string.
 		}
 		if err := writer.Write(record); err != nil {
 			return err
