@@ -1,232 +1,384 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="en" data-theme="light">
+<head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tasks Manager</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
+    <meta name="description" content="A simple task management application">
+    <title>Task Manager - Organize Your Workflow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f9f9f9;
-        margin: 0;
-        padding: 0;
-      }
-
-      header {
-        background-color: #007bff;
-        color: white;
-        padding: 1rem;
-        text-align: center;
-      }
-
-      main {
-        padding: 1rem;
-      }
-
-      section {
-        margin-bottom: 2rem;
-      }
-
-      .form-group {
-        margin-bottom: 1rem;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-      }
-
-      .form-group input[type="text"],
-      .form-group textarea {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-
-      button {
-        background-color: #007bff;
-        color: white;
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      button:hover {
-        background-color: #0056b3;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1rem;
-      }
-
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 0.75rem;
-        text-align: left;
-      }
-
-      th {
-        background-color: #f2f2f2;
-      }
-
-      tr:nth-child(even) {
-        background-color: #fafafa;
-      }
-    </style>
-    <header>
-      <h1>Tasks Manager</h1>
-    </header>
-    <main>
-      <section id="add-task-section">
-        <h2>Add New Task</h2>
-        <form id="add-task-form">
-          <div class="form-group">
-            <label for="task-name">Task Name:</label>
-            <input type="text" id="task-name" name="name" required />
-          </div>
-          <div class="form-group">
-            <label for="task-status">Status:</label>
-            <input type="checkbox" id="task-status" name="status" />
-            <span>(Check if completed)</span>
-          </div>
-          <div class="form-group">
-            <label for="task-desc">Description:</label>
-            <textarea id="task-desc" name="description" required></textarea>
-          </div>
-          <button type="submit">Add Task</button>
-        </form>
-      </section>
-      <section id="tasks-list-section">
-        <h2>Tasks List</h2>
-        <div id="tasks-container">
-          <!-- Tasks will be loaded here -->
-        </div>
-      </section>
-    </main>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        // Load tasks when the page loads
-        loadTasks();
-
-        // Attach event listener for the Add Task form
-        const addTaskForm = document.getElementById("add-task-form");
-        addTaskForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-          addTask();
-        });
-      });
-
-      // Fetch and display tasks from the server
-      function loadTasks() {
-        fetch("/tasks")
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Network response was not ok");
-            }
-            return response.json();
-          })
-          .then((tasks) => displayTasks(tasks))
-          .catch((error) => console.error("Error fetching tasks:", error));
-      }
-
-      // Render tasks in a table
-      function displayTasks(tasks) {
-        const container = document.getElementById("tasks-container");
-        container.innerHTML = ""; // Clear previous content
-
-        if (tasks.length === 0) {
-          container.innerHTML = "<p>No tasks found.</p>";
-          return;
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
+            --background-color: #f8fafc;
+            --text-color: #1e293b;
         }
 
-        // Create a table for tasks
-        const table = document.createElement("table");
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            min-height: 100vh;
+        }
 
-        // Create header row
-        const headerRow = document.createElement("tr");
-        const headers = ["ID", "Name", "Status", "Description"];
-        headers.forEach((headerText) => {
-          const th = document.createElement("th");
-          th.textContent = headerText;
-          headerRow.appendChild(th);
-        });
-        table.appendChild(headerRow);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
 
-        // Create a row for each task
-        tasks.forEach((task) => {
-          const row = document.createElement("tr");
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-          const idCell = document.createElement("td");
-          idCell.textContent = task.id;
-          row.appendChild(idCell);
+        main {
+            padding: 2rem 0;
+        }
 
-          const nameCell = document.createElement("td");
-          nameCell.textContent = task.name;
-          row.appendChild(nameCell);
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
 
-          const statusCell = document.createElement("td");
-          // Display status as "Completed" or "Pending"
-          statusCell.textContent = task.status ? "Completed" : "Pending";
-          row.appendChild(statusCell);
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
 
-          const descCell = document.createElement("td");
-          descCell.textContent = task.description;
-          row.appendChild(descCell);
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
 
-          table.appendChild(row);
-        });
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
 
-        container.appendChild(table);
-      }
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
 
-      // Send a new task to the server
-      function addTask() {
-        const nameInput = document.getElementById("task-name");
-        const statusInput = document.getElementById("task-status");
-        const descInput = document.getElementById("task-desc");
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-        // Build the task object from form values
-        const task = {
-          name: nameInput.value,
-          status: statusInput.checked,
-          description: descInput.value,
-        };
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.1s, background-color 0.2s;
+        }
 
-        fetch("/add", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(task),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to add task");
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .task-table th,
+        .task-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .task-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .task-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .status-badge.completed {
+            background-color: #dcfce7;
+            color: var(--success-color);
+        }
+
+        .status-badge.pending {
+            background-color: #fee2e2;
+            color: var(--error-color);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            color: white;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.visible {
+            display: block;
+        }
+
+        .toast.success {
+            background-color: var(--success-color);
+        }
+
+        .toast.error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @media (max-width: 768px) {
+            .task-table {
+                display: block;
+                overflow-x: auto;
             }
-            return response.json(); // Assume server responds with JSON data
-          })
-          .then((data) => {
-            // Clear the form fields
-            nameInput.value = "";
-            statusInput.checked = false;
-            descInput.value = "";
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Task Manager</h1>
+            <p>Organize your workflow efficiently</p>
+        </div>
+    </header>
 
-            // Optionally log the added task
-            console.log("Task added:", data);
-            // Refresh the tasks list to show the new task
-            loadTasks();
-          })
-          .catch((error) => console.error("Error adding task:", error));
-      }
+    <main class="container">
+        <section class="card">
+            <h2>Add New Task</h2>
+            <form id="add-task-form" aria-labelledby="add-task-heading">
+                <div class="form-group">
+                    <label for="task-name">Task Name</label>
+                    <input type="text" id="task-name" name="name" required 
+                           aria-required="true" placeholder="Enter task name">
+                </div>
+
+                <div class="form-group">
+                    <label for="task-desc">Description</label>
+                    <textarea id="task-desc" name="description" required 
+                              aria-required="true" rows="3" placeholder="Task description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="task-status" name="status">
+                        <label for="task-status">Mark as completed</label>
+                    </div>
+                </div>
+
+                <button type="submit" aria-label="Add new task">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Task List</h2>
+            <div id="tasks-container" role="region" aria-live="polite">
+                <!-- Loading spinner -->
+                <div class="loading-spinner" hidden>
+                    <i class="fas fa-spinner fa-spin"></i> Loading tasks...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast notifications -->
+    <div id="toast" class="toast" role="alert"></div>
+
+    <script>
+        (() => {
+            const API_ENDPOINTS = {
+                TASKS: '/tasks',
+                ADD_TASK: '/add'
+            };
+            
+            class TaskManager {
+                constructor() {
+                    this.form = document.getElementById('add-task-form');
+                    this.tasksContainer = document.getElementById('tasks-container');
+                    this.toast = document.getElementById('toast');
+                    this.loadingSpinner = document.querySelector('.loading-spinner');
+                    this.initialize();
+                }
+
+                initialize() {
+                    this.addEventListeners();
+                    this.loadTasks();
+                }
+
+                addEventListeners() {
+                    this.form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        await this.handleFormSubmit();
+                    });
+                }
+
+                async loadTasks() {
+                    try {
+                        this.showLoading();
+                        const response = await fetch(API_ENDPOINTS.TASKS);
+                        this.handleResponseErrors(response);
+                        const tasks = await response.json();
+                        this.displayTasks(tasks);
+                    } catch (error) {
+                        this.showError(error.message);
+                    } finally {
+                        this.hideLoading();
+                    }
+                }
+
+                async handleFormSubmit() {
+                    const formData = new FormData(this.form);
+                    const task = {
+                        name: formData.get('name'),
+                        description: formData.get('description'),
+                        status: formData.get('status') === 'on'
+                    };
+
+                    try {
+                        const response = await fetch(API_ENDPOINTS.ADD_TASK, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(task)
+                        });
+
+                        this.handleResponseErrors(response);
+                        await this.loadTasks();
+                        this.showSuccess('Task added successfully!');
+                        this.form.reset();
+                    } catch (error) {
+                        this.showError(error.message);
+                    }
+                }
+
+                displayTasks(tasks) {
+                    this.tasksContainer.innerHTML = tasks.length > 0 
+                        ? this.createTaskTable(tasks)
+                        : '<p class="no-tasks">No tasks found. Add your first task!</p>';
+                }
+
+                createTaskTable(tasks) {
+                    return `
+                        <table class="task-table" aria-label="List of tasks">
+                            <thead>
+                                <tr>
+                                    ${['ID', 'Name', 'Status', 'Description'].map(
+                                        header => `<th scope="col">${header}</th>`
+                                    ).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tasks.map(task => `
+                                    <tr>
+                                        <td>${task.id}</td>
+                                        <td>${this.escapeHTML(task.name)}</td>
+                                        <td>
+                                            <span class="status-badge ${task.status ? 'completed' : 'pending'}">
+                                                <i class="fas ${task.status ? 'fa-check' : 'fa-clock'}"></i>
+                                                ${task.status ? 'Completed' : 'Pending'}
+                                            </span>
+                                        </td>
+                                        <td>${this.escapeHTML(task.description)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+
+                // Utility methods
+                showLoading() {
+                    this.loadingSpinner.hidden = false;
+                }
+
+                hideLoading() {
+                    this.loadingSpinner.hidden = true;
+                }
+
+                handleResponseErrors(response) {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                }
+
+                showSuccess(message) {
+                    this.showToast(message, 'success');
+                }
+
+                showError(message) {
+                    this.showToast(message, 'error');
+                }
+
+                showToast(message, type) {
+                    this.toast.textContent = message;
+                    this.toast.className = `toast visible ${type}`;
+                    setTimeout(() => {
+                        this.toast.classList.remove('visible');
+                    }, 3000);
+                }
+
+                escapeHTML(str) {
+                    return str.replace(/&/g, '&amp;')
+                               .replace(/</g, '&lt;')
+                               .replace(/>/g, '&gt;');
+                }
+            }
+
+            // Initialize the application
+            document.addEventListener('DOMContentLoaded', () => {
+                new TaskManager();
+            });
+        })();
     </script>
-  </body>
+</body>
 </html>
