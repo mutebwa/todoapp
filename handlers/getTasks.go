@@ -4,82 +4,90 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 )
 
-// GetTasks is an HTTP handler that reads tasks from a CSV file and returns them as JSON.
+// GetTasks reads tasks from CSV and returns them as JSON
 func GetTasks(w http.ResponseWriter, r *http.Request) {
-	// Read tasks from the CSV file.
 	tasks, err := ReadTasksFromCSV("./tasks.csv")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to read tasks: %v", err), http.StatusInternalServerError)
+		log.Printf("Error reading tasks: %v", err) // Log detailed error
+		http.Error(w, "Failed to retrieve tasks", http.StatusInternalServerError)
 		return
 	}
 
-	// Set the response header to application/json.
 	w.Header().Set("Content-Type", "application/json")
-
-	// Encode tasks as JSON and write to the response.
 	if err := json.NewEncoder(w).Encode(tasks); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to encode tasks: %v", err), http.StatusInternalServerError)
-		return
+		log.Printf("JSON encoding error: %v", err)
+		http.Error(w, "Failed to format response", http.StatusInternalServerError)
 	}
 }
 
-// ReadTasksFromCSV reads a CSV file with the provided filename and returns a slice of Task.
+// ReadTasksFromCSV reads and validates tasks from CSV
 func ReadTasksFromCSV(filename string) ([]Task, error) {
-	// Open the CSV file.
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open CSV file: %w", err)
+		if os.IsNotExist(err) { // Handle missing file gracefully
+			return []Task{}, nil
+		}
+		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 	defer file.Close()
 
-	// Create a new CSV reader.
 	reader := csv.NewReader(file)
-
-	// Read all records from the CSV file.
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("unable to read CSV file: %w", err)
+		return nil, fmt.Errorf("error reading records: %w", err)
 	}
 
-	// Check that there is at least a header row.
-	if len(records) < 1 {
-		return nil, fmt.Errorf("CSV file is empty")
+	if len(records) == 0 {
+		return []Task{}, nil // Empty file (only header case handled later)
+	}
+
+	// Validate CSV header
+	expectedHeader := []string{"ID", "Name", "Status", "Description"}
+	if !sliceEqual(records[0], expectedHeader) {
+		return nil, fmt.Errorf("invalid CSV header. Got %v, expected %v", records[0], expectedHeader)
 	}
 
 	var tasks []Task
-
-	// Start at index 1 to skip the header row.
 	for i, record := range records[1:] {
-		// Each record should have exactly 4 fields.
-		if len(record) < 4 {
-			return nil, fmt.Errorf("record %d is malformed: %v", i+1, record)
+		if len(record) != 4 {
+			return nil, fmt.Errorf("row %d: invalid field count (%d), expected 4", i+2, len(record))
 		}
 
-		// Convert ID from string to int.
 		id, err := strconv.Atoi(record[0])
 		if err != nil {
-			return nil, fmt.Errorf("error parsing ID on row %d: %w", i+2, err)
+			return nil, fmt.Errorf("row %d: invalid ID format: %w", i+2, err)
 		}
 
-		// Convert Status from string to bool.
 		status, err := strconv.ParseBool(record[2])
 		if err != nil {
-			return nil, fmt.Errorf("error parsing Status on row %d: %w", i+2, err)
+			return nil, fmt.Errorf("row %d: invalid status format: %w", i+2, err)
 		}
 
-		task := Task{
+		tasks = append(tasks, Task{
 			ID:          id,
 			Name:        record[1],
 			Status:      status,
 			Description: record[3],
-		}
-		tasks = append(tasks, task)
+		})
 	}
-
 	return tasks, nil
+}
+
+// Helper function to compare string slices
+func sliceEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
